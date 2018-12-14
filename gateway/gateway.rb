@@ -147,26 +147,24 @@ If you wish to install cloud9, run the following command first, then go to Cloud
 setup the SSH environment into this machine.
 
     sudo yum update -y
+    sudo yum install git -y
     sudo amazon-linux-extras install docker -y
 
 Use the below command to install various languages
 
     # java
-    sudo yum install -y java-1.8.0-openjdk-headless
+    sudo yum install -y java-1.8.0-openjdk-headless maven
 
     # Go
-    sudo amazon-linux-extras install golang1.9 ruby2.4 -y
+    sudo amazon-linux-extras install golang1.9 -y
 
     # Ruby
     sudo amazon-linux-extras install ruby2.4 -y
-    sudo yum install rubygem-bundler -y
+    sudo yum install -y ruby-devel ruby-doc rubygem-bundler 
 
-You can use enable epel and get nodejs and other googies
-    sudo amazon-linux-extras install epel
-    
-    sudo yum install epel-release -y
-    sudo yum install nodejs -y
-
-    sudo amazon-linux-extras disable epel # turn if off after you're done
+    # nodejs is not in default repos. it's safer to just get binary 
+    # than install from epel. some packages in epel conflicts with what AWS
+    # provides.
+    curl http://nodejs.org/dist/v6.12.3/node-v6.12.3-linux-x64.tar.gz | tar zxf -
 
 }
