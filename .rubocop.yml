@@ -1,0 +1,27 @@
+AllCops:
+  TargetRubyVersion: 2.3
+  TargetRailsVersion: 5.0
+  Exclude:
+    - 'bin/**'
+    - 'tmp/**/*'
+
+Bundler/OrderedGems:
+  Enabled: false
+
+Style/Documentation:
+  Enabled: false
+
+Style/ClassAndModuleChildren:
+  Enabled: false
+
+Metrics/LineLength:
+  Max: 120
+
+Metrics/MethodLength:
+  Max: 30
+
+Metrics/AbcSize:
+  Max: 30
+
+Style/FrozenStringLiteralComment:
+  Enabled: false
