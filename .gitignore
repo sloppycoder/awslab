@@ -1,4 +1,4 @@
 *.log
 *.tmp
 tmp/*
-
+.byebug_history
