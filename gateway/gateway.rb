@@ -97,8 +97,6 @@ def create_workstation_instance(ec2, keypair, security_group_id,
 
   subnet_id = subnet_id_for_zone(ec2.client, vpc_id, zone)
 
-  debugger
-
   instance = ec2.create_instances(
     image_id: 'ami-01bbe152bf19d0289', # Amazon Linux 2 AMI (HVM) x86_64
     min_count: 1,
@@ -133,8 +131,7 @@ end
 iam_profile = 'arn:aws:iam::025604691335:instance-profile/myInstaceRole'
 region = 'us-west-2'
 security_group = 'ssh-http-https'
-vpc_id = 'vpc-7812eb1d'
-subnet_id = 'subnet-b1b259c6'
+vpc_id = 'vpc-0f9bf8360078373b8'
 fqdn = 'd.vino9.net'
 
 ec2 = Aws::EC2::Resource.new(region: region)
