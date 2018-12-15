@@ -25,8 +25,12 @@ def tags(h)
   h.collect { |k, v| { key: k.to_s, value: v.to_s } }
 end
 
-def subnet_id_for_zone(ec2_client, vpc_id, zone = 'a')
-  zone_name = ec2_client.config.region + zone
-  result = ec2_client.describe_subnets(filters("vpc-id" => vpc_id))
-  result.subnets.select {|subnet| subnet.availability_zone == zone_name}.first.subnet_id
+def find_subnet(ec2_client, vpc_id, zone: nil, name: nil)
+  result = ec2_client.describe_subnets(filters('vpc-id' => vpc_id))
+  selected = result.subnets.select do |subnet|
+    match_zone = zone.nil? || subnet.availability_zone == ec2_client.config.region + zone
+    match_name = name.nil? || !subnet.tags.select { |tag| tag.key == 'Name' && tag.value == name }.empty?
+    match_zone && match_name
+  end
+  !selected.empty? ? selected.first : nil
 end
