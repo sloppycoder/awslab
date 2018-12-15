@@ -90,12 +90,11 @@ def create_security_group(ec2, vpc_id, group_name)
 end
 
 def create_workstation_instance(ec2, keypair, security_group_id,
-                                zone: 'b',
                                 iam_role_profile: nil,
                                 vpc_id: nil,
                                 fqdn: nil)
 
-  subnet_id = subnet_id_for_zone(ec2.client, vpc_id, zone)
+  subnet = find_subnet(ec2.client, vpc_id, name: 'Public subnet')
 
   instance = ec2.create_instances(
     image_id: 'ami-01bbe152bf19d0289', # Amazon Linux 2 AMI (HVM) x86_64
@@ -103,10 +102,10 @@ def create_workstation_instance(ec2, keypair, security_group_id,
     max_count: 1,
     key_name: keypair,
     security_group_ids: [security_group_id],
-    subnet_id: subnet_id,
+    subnet_id: subnet.subnet_id,
     instance_type: 't3.small',
     placement: {
-      availability_zone: ec2.client.config.region + zone
+      availability_zone: subnet.availability_zone
     },
     iam_instance_profile: {
       arn: iam_role_profile
