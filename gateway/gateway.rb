@@ -13,52 +13,16 @@ require 'base64'
 require 'byebug'
 require_relative '../lib/awsutil'
 
-def update_r53_script(fqdn)
-  return '' unless fqdn
-
+def startup_script
   # User code that's executed when the instance starts
   %{#!/bin/sh
 
 yum update -y
 yum install -y jq git tmux
 
-  cat > /etc/rc.d/rc.local <<END_RC_LOCAL
-#!/bin/sh
-
-FQDN="#{fqdn}"
-IP=\\$( curl -s http://169.254.169.254/latest/meta-data/public-ipv4 )
-DOMAIN=\\${FQDN#*.*}
-
-cat > /tmp/r53.json << EOF
-{
-  "Comment": "Update the A record set",
-  "Changes": [
-    {
-      "Action": "UPSERT",
-      "ResourceRecordSet": {
-        "Name": "\\$FQDN",
-        "Type": "A",
-        "TTL": 60,
-        "ResourceRecords": [
-          {
-            "Value": "\\$IP"
-          }
-        ]
-      }
-    }
-  ]
-}
-EOF
-
-ZONE_ID=\\$( aws route53 list-hosted-zones-by-name | jq --arg name "\\$DOMAIN." -r '.HostedZones | .[] | select(.Name=="\\(\\$name)") | .Id' | cut -d '/' -f 3)
-aws route53 change-resource-record-sets --hosted-zone-id "\\$ZONE_ID" --change-batch file:///tmp/r53.json
-
-rm /tmp/r53.json
-END_RC_LOCAL
-
+curl -sL https://gist.github.com/sloppycoder/d495a2bb2f68a847bda7286dcecc3dcf/raw > /etc/rc.d/rc.local
 chmod +x /etc/rc.d/rc.local
 systemctl enable rc-local
-
 /etc/rc.d/rc.local
 }
 end
@@ -110,7 +74,7 @@ def create_workstation_instance(ec2, keypair, security_group_id,
     iam_instance_profile: {
       arn: iam_role_profile
     },
-    user_data: Base64.encode64(update_r53_script(fqdn))
+    user_data: Base64.encode64(startup_script)
   )
   puts "instance #{instance.first.id} launed, please wait while it boots up"
   # Wait for the instance to be created, running, and passed status checks
@@ -119,8 +83,9 @@ def create_workstation_instance(ec2, keypair, security_group_id,
   instance.batch_create_tags(tags: tags(
     'Project' => 'awslab',
     'os' => 'Linux',
-    'Role' => 'workstation',
-    'Name' => 'workstation'
+    'Role' => 'bastion',
+    'Name' => 'workstation',
+    'FQDN' => fqdn
   ))
 
   puts "instance #{instance.first.id} running"
@@ -130,7 +95,7 @@ end
 iam_profile = 'arn:aws:iam::025604691335:instance-profile/myInstaceRole'
 region = 'us-west-2'
 security_group = 'ssh-http-https'
-vpc_id = 'vpc-0f9bf8360078373b8'
+vpc_id = 'vpc-057a740f9dc10eb7b'
 fqdn = 'd.vino9.net'
 
 ec2 = Aws::EC2::Resource.new(region: region)
