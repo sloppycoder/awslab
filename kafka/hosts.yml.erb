@@ -15,8 +15,8 @@ preflight:
 <% end %>
     conn.t.co:
     kt.t.co:
-ssl_CA:
-  hosts:
+#ssl_CA:
+#  hosts:
 zookeeper:
   hosts:
 <% (1..n_zk_nodes).each do |n| %>
@@ -33,8 +33,8 @@ broker:
 schema-registry:
   hosts:
     kt.t.co:
-control-center:
-  hosts:
+#control-center:
+#  hosts:
 #    kt.t.co:
 #      confluent:
 #        control:
@@ -44,8 +44,8 @@ control-center:
 connect-distributed:
   hosts:
     conn.t.co:
-kafka-rest:
-  hosts:
+#kafka-rest:
+#  hosts:
 ksql:
   hosts:
     conn.t.co:
