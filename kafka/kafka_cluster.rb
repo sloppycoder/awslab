@@ -13,6 +13,7 @@
 #    https://github.com/confluentinc/cp-ansible
 #
 
+require 'erb'
 require 'byebug'
 require_relative '../lib/awslab'
 
@@ -29,6 +30,7 @@ def set_hostname(fqdn)
   "hostnamectl set-hostname #{fqdn}"
 end
 
+#
 # isntance types
 #   m5.large   2/8/0.10   vcpu/G ram/per hour usage us-west-2
 #   m5.xlarge  4/16/0.20
@@ -39,6 +41,9 @@ iam_profile = 'arn:aws:iam::025604691335:instance-profile/myInstaceRole'
 region = 'us-west-2'
 subnet_id = 'subnet-0c4e4a46911040008'
 keypair = 'labkey'
+
+
+template = ERB.new(File.read('hosts.yml.erb'), nil, '<>')
 
 n_zk_nodes = 1
 n_broker_nodes = 3
@@ -71,3 +76,9 @@ end
                    startup_script: base_startup_script(set_hostname(fqdn)),
                    tags: instance_tags(role, fqdn))
 end
+
+File.open('hosts.yml', 'w') do |f|
+  f.write template.result
+end
+
+exit(0)

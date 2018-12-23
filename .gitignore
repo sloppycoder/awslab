@@ -4,5 +4,6 @@ tmp/*
 .byebug_history
 .idea/
 *.iml
+kafka/hosts.yml
 
 

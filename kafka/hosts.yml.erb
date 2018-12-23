@@ -1,0 +1,54 @@
+all:
+  vars:
+    ansible_connection: ssh
+    ansible_ssh_user: ec2-user
+    ansible_become: true
+    security_mode: plain_text
+#    security_mode: sasl_ssl
+preflight:
+  hosts:
+<% (1..n_zk_nodes).each do |n| %>
+    <%="zk#{n}.t.co:"%>
+<% end %>
+<% (1..n_broker_nodes).each do |n| %>
+    <%="b#{n}.t.co:"%>
+<% end %>
+    conn.t.co:
+    kt.t.co:
+ssl_CA:
+  hosts:
+zookeeper:
+  hosts:
+<% (1..n_zk_nodes).each do |n| %>
+    <%= "zk#{n}.t.co:" %>
+<% end %>
+broker:
+  hosts:
+<% (1..n_broker_nodes).each do |n| %>
+    <%= "b#{n}.t.co:"%>
+      kafka:
+        broker:
+          id: <%= n %>
+<% end %>
+schema-registry:
+  hosts:
+    kt.t.co:
+control-center:
+  hosts:
+#    kt.t.co:
+#      confluent:
+#        control:
+#          center:
+#            config:
+#              confluent.controlcenter.connect.cluster: 
+connect-distributed:
+  hosts:
+    conn.t.co:
+kafka-rest:
+  hosts:
+ksql:
+  hosts:
+    conn.t.co:
+tools:
+  hosts:
+    kt.t.co:
