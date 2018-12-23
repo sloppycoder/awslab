@@ -43,7 +43,7 @@ subnet_id = 'subnet-0c4e4a46911040008'
 keypair = 'labkey'
 
 
-template = ERB.new(File.read('hosts.yml.erb'), nil, '<>')
+template = ERB.new(File.read("#{File.dirname(__FILE__)}/hosts.yml.erb"), nil, '<>')
 
 n_zk_nodes = 1
 n_broker_nodes = 3
