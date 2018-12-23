@@ -2,7 +2,7 @@
 #
 # run this playbook with the following command:
 #
-#     ansible-playbook -i "m.t.co," setup_monitoring.yml --extra-vars "fqdn=d.vino9.net"
+#     ansible-playbook -i "m.t.co," infra.yml --extra-vars "fqdn=d.vino9.net"
 # 
 - name: Installing software packages for monitoring host
   hosts: all
@@ -62,7 +62,7 @@
     lineinfile:
       path: /etc/grafana/grafana.ini
       regexp: '^root_url ='
-      insertafter: "root_url =  http://localhost"
+      insertafter: "^;root_url = http://localhost"
       line: "root_url =  https://{{ fqdn }}/grafana"
     become: yes
 
