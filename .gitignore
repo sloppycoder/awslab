@@ -2,3 +2,7 @@
 *.tmp
 tmp/*
 .byebug_history
+.idea/
+*.iml
+
+

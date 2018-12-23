@@ -1,31 +1,15 @@
 #!/usr/bin/env ruby
 
 #
-# setup a gateway machine for testing
+# setup a infra machine for testing
 #
 #  1. create a security group ssh-http-https
 #  2. launch an instance with AWS Linux 2
 #  3. Update Route 53 record setup to reflect the public IP of the instance
 #
 
-require 'aws-sdk-ec2'
-require 'base64'
 require 'byebug'
-require_relative '../lib/awsutil'
-
-def startup_script
-  # User code that's executed when the instance starts
-  %{#!/bin/sh
-
-yum update -y
-yum install -y jq git tmux
-
-curl -sL https://gist.github.com/sloppycoder/d495a2bb2f68a847bda7286dcecc3dcf/raw > /etc/rc.d/rc.local
-chmod +x /etc/rc.d/rc.local
-systemctl enable rc-local
-/etc/rc.d/rc.local
-}
-end
+require_relative '../lib/awslab'
 
 def create_security_group(ec2, vpc_id, group_name)
   sg = ec2.create_security_group(
@@ -53,54 +37,25 @@ def create_security_group(ec2, vpc_id, group_name)
   sg
 end
 
-def create_workstation_instance(ec2, keypair, security_group_id,
-                                iam_role_profile: nil,
-                                vpc_id: nil,
-                                fqdn: nil)
-
-  subnet = find_subnet(ec2.client, vpc_id, name: 'Public subnet')
-
-  instance = ec2.create_instances(
-    image_id: 'ami-01bbe152bf19d0289', # Amazon Linux 2 AMI (HVM) x86_64
-    min_count: 1,
-    max_count: 1,
-    key_name: keypair,
-    security_group_ids: [security_group_id],
-    subnet_id: subnet.subnet_id,
-    instance_type: 't3.small',
-    placement: {
-      availability_zone: subnet.availability_zone
-    },
-    iam_instance_profile: {
-      arn: iam_role_profile
-    },
-    user_data: Base64.encode64(startup_script)
-  )
-  puts "instance #{instance.first.id} launed, please wait while it boots up"
-  # Wait for the instance to be created, running, and passed status checks
-  ec2.client.wait_until(:instance_status_ok, instance_ids: [instance.first.id])
-
-  instance.batch_create_tags(tags: tags(
-    'Project' => 'awslab',
+def instance_tags(fqdn)
+  {
+    'Project' => 't-co-infra',
     'os' => 'Linux',
-    'Role' => 'bastion',
-    'Name' => 'workstation',
+    'Role' => 'gateway',
     'FQDN' => fqdn
-  ))
-
-  puts "instance #{instance.first.id} running"
-  instance
+  }
 end
 
 iam_profile = 'arn:aws:iam::025604691335:instance-profile/myInstaceRole'
 region = 'us-west-2'
 security_group = 'ssh-http-https'
 vpc_id = 'vpc-057a740f9dc10eb7b'
-fqdn = 'd.vino9.net'
+fqdn = 't.vino9.net'
+keypair = 'aws_hayashi3'
 
 ec2 = Aws::EC2::Resource.new(region: region)
 
-result = ec2.client.describe_security_groups(filters: [{ name: 'group-name', values: [security_group] }])
+result = ec2.client.describe_security_groups(aws_filters('group-name' => security_group))
 sg = if result.security_groups.empty?
        create_security_group(ec2, vpc_id, security_group)
      else
@@ -108,10 +63,19 @@ sg = if result.security_groups.empty?
      end
 
 # TODO: add check if instance already exists
-create_workstation_instance(ec2, 'aws_hayashi3', sg.group_id,
+subnet = find_subnet(ec2.client, vpc_id, name: 'Public subnet')
+
+instance = create_instances(ec2, keypair, subnet.subnet_id,
+                            instance_type: 't3.micro',
                             iam_role_profile: iam_profile,
-                            vpc_id: vpc_id,
-                            fqdn: fqdn)
+                            startup_script: base_startup_script,
+                            security_group_id: sg.group_id,
+                            tags: instance_tags(fqdn))
+
+puts "waiting for instance #{instance.first.id} to be ready"
+
+# Wait for the instance to be created, running, and passed status checks
+ec2.client.wait_until(:instance_status_ok, instance_ids: [instance.first.id])
 
 puts %(
 Instance ready. To login:
@@ -129,7 +93,7 @@ setup the SSH environment into this machine.
     sudo yum install -y java-1.8.0-openjdk-headless maven
 
     # Go
-    sudo amazon-linux-extras install golang1.9 -y
+    sudo amazon-linux-extras install golang1.11 -y
 
     # Ruby
     sudo amazon-linux-extras install ruby2.4 -y
@@ -139,5 +103,4 @@ setup the SSH environment into this machine.
     # than install from epel. some packages in epel conflicts with what AWS
     # provides.
     curl http://nodejs.org/dist/v6.12.3/node-v6.12.3-linux-x64.tar.gz | tar zxf -
-
 )

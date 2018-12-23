@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# kill all kafka related instances 
+aws ec2 terminate-instances --instance-ids \
+  $(aws ec2 describe-instances --query 'Reservations[].Instances[].InstanceId' --filters "Name=tag-value,Values=kafka" --output text)

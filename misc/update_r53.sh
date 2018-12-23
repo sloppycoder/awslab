@@ -9,7 +9,7 @@
 # https://gist.github.com/sloppycoder/d495a2bb2f68a847bda7286dcecc3dcf
 #
 
-udpate_r53()
+update_r53()
 {
     fqdn=$1
     ip_addr=$2
@@ -98,4 +98,4 @@ if [ "$aws" = "" ]; then
 fi
 
 determine_ip
-udpate_r53 $FQDN $IP
+update_r53 $FQDN $IP

@@ -3,71 +3,71 @@
 #
 # setup a Kafka cluster machines testing
 #
-# 1. create a VPC with internet gateway but no public IP
-# 2. create 1 zoo keeper node.
-# 3. create N Kafka broker nodes
-# 4. create 1 node for monitoring...install influx db etc
+# 1. create n zoo keeper node.
+# 2. create n Kafka broker nodes
+# 3. 1 node for schema registry
+# 4. 1 node for kafka connect
+# 5. create 1 node for monitoring...install influx db etc.
+#    this is not part of confluent platform
+# 6. output a hosts.yml which can be passed to Confluent ansible playbook
+#    https://github.com/confluentinc/cp-ansible
 #
 
-require 'aws-sdk-ec2'
-require 'base64'
 require 'byebug'
-require_relative '../lib/awsutil'
+require_relative '../lib/awslab'
 
-def startup_script
-  %(#!/bin/sh
-yum update -y
-yum install -y jq git tmux java maven
-)
-end
-
-def create_workstation_instance(ec2, keypair,
-                                name: 'no_name',
-                                role: 'no_role',
-                                iam_role_profile: nil,
-                                vpc_id: nil)
-
-  subnet = find_subnet(ec2.client, vpc_id, name: 'Private subnet')
-
-  instance = ec2.create_instances(
-    image_id: 'ami-01bbe152bf19d0289', # Amazon Linux 2 AMI (HVM) x86_64
-    min_count: 1,
-    max_count: 1,
-    key_name: keypair,
-    #    security_group_ids: [security_group_id],
-    subnet_id: subnet.subnet_id,
-    instance_type: 't3.small',
-    placement: {
-      availability_zone: subnet.availability_zone
-    },
-    iam_instance_profile: {
-      arn: iam_role_profile
-    },
-    user_data: Base64.encode64(startup_script)
-  )
-  puts "instance #{instance.first.id} launed, please wait while it boots up"
-  # Wait for the instance to be created, running, and passed status checks
-  ec2.client.wait_until(:instance_status_ok, instance_ids: [instance.first.id])
-
-  instance.batch_create_tags(tags: tags(
-    'Project' => 'awslab',
+def instance_tags(role, fqdn)
+  {
+    'Project' => 'kafka',
     'os' => 'Linux',
     'Role' => role,
-    'Name' => name
-  ))
-
-  puts "instance #{instance.first.id} running"
-  instance
+    'FQDN' => fqdn
+  }
 end
+
+def set_hostname(fqdn)
+  "hostnamectl set-hostname #{fqdn}"
+end
+
+# isntance types
+#   m5.large   2/8/0.10   vcpu/G ram/per hour usage us-west-2
+#   m5.xlarge  4/16/0.20
+#   m5.2xlarge 8/32/0.40
+#
 
 iam_profile = 'arn:aws:iam::025604691335:instance-profile/myInstaceRole'
 region = 'us-west-2'
-vpc_id = 'vpc-0f9bf8360078373b8'
+subnet_id = 'subnet-0c4e4a46911040008'
+keypair = 'labkey'
+
+n_zk_nodes = 1
+n_broker_nodes = 3
 
 ec2 = Aws::EC2::Resource.new(region: region)
 
-create_workstation_instance(ec2, 'labkey', vpc_id: vpc_id, name: 'zookeeper', role: 'zookeeper')
+(1..n_zk_nodes).collect { |i| "zk#{i}.t.co" }.each do |fqdn|
+  create_instances(ec2, keypair, subnet_id,
+                   instance_type: 'm5.large',
+                   iam_role_profile: iam_profile,
+                   startup_script: base_startup_script(set_hostname(fqdn)),
+                   tags: instance_tags('zoo-keeper', fqdn))
+end
 
-puts %(
-Instances ready
-)
+(1..n_broker_nodes).collect { |i| "b#{i}.t.co" }.each do |fqdn|
+  create_instances(ec2, keypair, subnet_id,
+                   instance_type: 'm5.2xlarge',
+                   iam_role_profile: iam_profile,
+                   startup_script: base_startup_script(set_hostname(fqdn)),
+                   tags: instance_tags('kafka-broker', fqdn))
+end
+
+{
+  'kafka-connect' => 'conn.t.co',
+  'kafka-tools' => 'kt.t.co'
+}.each do |role, fqdn|
+  create_instances(ec2, keypair, subnet_id,
+                   instance_type: 'm5.large',
+                   iam_role_profile: iam_profile,
+                   startup_script: base_startup_script(set_hostname(fqdn)),
+                   tags: instance_tags(role, fqdn))
+end
