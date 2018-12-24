@@ -33,6 +33,19 @@
       - { regexp: '^(confluent.metrics.reporter.topic.replicas=.*)' }
       - { regexp: '^(confluent.support.customer.id=.*)'}
 
+  - name: create kafka data directory
+    file:
+      path: /vol_b/kafka_data
+      owner: cp-kafka
+      group: confluent
+      state: directory
+
+  - name: use alternative kafka data directory
+    lineinfile:
+      path: /etc/kafka/server.properties
+      regexp: '^log.dir'
+      line: 'log.dirs=/vol_b/kafka_data'
+
   - name: enable influxdb metrics reporter
     blockinfile:
       path: /etc/kafka/server.properties

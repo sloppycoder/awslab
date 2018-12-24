@@ -58,9 +58,13 @@ end
 
 (1..n_broker_nodes).collect { |i| "b#{i}.t.co" }.each do |fqdn|
   create_instances(ec2, keypair, subnet_id,
-                   instance_type: 'm5.2xlarge',
+                   instance_type: 'm5.xlarge', # 'm5.2xlarge'
+                   block_device_mappings: [
+                     ebs('/dev/xvda'),
+                     ebs('/dev/xvdb', type: 'st1', size: 500)
+                   ],
                    iam_role_profile: iam_profile,
-                   startup_script: base_startup_script(set_hostname(fqdn)),
+                   startup_script: base_startup_script(set_hostname(fqdn)) + + init_vol('/dev/xvdb'),
                    tags: instance_tags('kafka-broker', fqdn))
 end
 
