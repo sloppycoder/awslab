@@ -53,22 +53,17 @@
     become: yes
 
   - name: configure grafana
-    tasks:
-      - name: update domain setting
-        lineinfile:
-          path: /etc/grafana/grafana.ini
-          regexp: '^domain ='
-          insertafter: "^;domain = localhost"
-          line: "domain = {{ fqdn }}"
-      - name: update root_url setting
-        lineinfile:
-          path: /etc/grafana/grafana.ini
-          regexp: '^root_url ='
-          insertafter: "^;root_url = http://localhost"
-          line: "root_url =  https://{{ fqdn }}/grafana"
-      become: yes
-      notify:
-        - restart grafana
+    lineinfile:
+      path: /etc/grafana/grafana.ini
+      regexp: "{{ item.regexp }}"
+      insertafter: "{{ item.insertafter }}"
+      line: "{{ item.line }}"
+    with_items:
+      - { regexp: '^domain =', insertafter: "^;domain = localhost", line: "domain = {{ fqdn }}" }
+      - { regexp: '^root_url =', insertafter: "^;root_url = http://localhost", line: "root_url =  https://{{ fqdn }}/grafana" }
+    become: yes
+    notify:
+      - restart grafana
 
   - name: start grafana
     systemd:
@@ -76,13 +71,15 @@
       name: grafana-server
     become: yes
 
-  - handlers:
-    - name: restart chronograf
-      systemd:
-        name: chronograf
-        state: restarted
+  handlers:
+  - name: restart chronograf
+    systemd:
+      name: chronograf
+      state: restarted
+    become: yes
 
-    - name: restart grafana
-      systemd:
-        name: grafana-server
-        state: restarted
+  - name: restart grafana
+    systemd:
+      name: grafana-server
+      state: restarted
+    become: yes
