@@ -34,6 +34,19 @@ def aws_tags(resource_type, tags)
   }]
 end
 
+# generate EBS BlockDeviceMapping structure
+def ebs(device_name, type: 'gp2', size: 8)
+  {
+    device_name: device_name,
+    ebs: {
+      delete_on_termination: true,
+      volume_size: size,
+      volume_type: type
+    },
+    no_device: ''
+  }
+end
+
 def find_subnet(ec2_client, vpc_id, zone: nil, name: nil)
   result = ec2_client.describe_subnets(aws_filters('vpc-id' => vpc_id))
   selected = result.subnets.select do |subnet|
@@ -64,11 +77,27 @@ sleep 2
 )
 end
 
+# dangerous script!
+def init_vol(device_name)
+  return '' if device_name.nil? || device_name.empty?
+
+  mount_dir = "/vol_#{device_name[-1]}"
+  %(
+if [ -b #{device_name} ]; then
+    mkfs.xfs #{device_name}
+    mkdir -p #{mount_dir}
+    echo "#{device_name}     #{mount_dir}           xfs    defaults,noatime  1   1" >> /etc/fstab
+    mount #{mount_dir}
+fi
+)
+end
+
 def create_instances(ec2,
                      keypair,
                      subnet_id,
                      quantity: 1,
                      instance_type: 't3.micro',
+                     block_device_mappings: nil,
                      security_group_id: nil,
                      iam_role_profile: nil,
                      startup_script: '',
@@ -89,6 +118,7 @@ def create_instances(ec2,
     tag_specifications: aws_tags('instance', tags)
   }
   options[:security_group_ids] = [security_group_id] unless security_group_id.nil?
+  options[:block_device_mappings] = block_device_mappings unless block_device_mappings.nil?
 
   ec2.create_instances(options)
 end
