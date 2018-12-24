@@ -8,7 +8,6 @@
 #  3. Update Route 53 record setup to reflect the public IP of the instance
 #
 
-require 'byebug'
 require_relative '../lib/awslab'
 
 def create_security_group(ec2, vpc_id, group_name)

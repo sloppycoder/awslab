@@ -5,7 +5,6 @@
 #    this is not part of confluent platform
 #
 
-require 'byebug'
 require_relative '../lib/awslab'
 
 def instance_tags(role, fqdn)

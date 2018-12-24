@@ -14,7 +14,6 @@
 #
 
 require 'erb'
-require 'byebug'
 require_relative '../lib/awslab'
 
 def instance_tags(role, fqdn)
