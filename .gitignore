@@ -6,5 +6,7 @@ tmp/*
 *.iml
 kafka/hosts.yml
 *.retry
+.byebug_history
+
 
 
