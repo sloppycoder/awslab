@@ -1,0 +1,11 @@
+#!/bin/bash
+
+instance_ids=$(aws ec2 describe-instances --query 'Reservations[].Instances[].InstanceId' --filters "Name=tag:FQDN,Values=$1" --output text)
+
+if [ "$instance_ids" = "" ]; then
+  echo "Cannot find any instances"
+  exit 1
+fi
+
+aws ec2 start-instances --instance-ids $instance_ids
+

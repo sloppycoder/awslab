@@ -1,0 +1,15 @@
+#!/bin/bash
+
+instance_ids=$(aws ec2 describe-instances --query 'Reservations[].Instances[].InstanceId' --filters "Name=tag:Project,Values=kafka" --output text)
+
+if [ "$instance_ids" = "" ]; then
+  echo "Cannot find any instances"
+  exit 1
+fi
+
+if [ "$1" = "--kill" ]; then
+    aws ec2 terminate-instances --instance-ids $instance_ids
+else
+    aws ec2 stop-instances --instance-ids $instance_ids
+fi
+
