@@ -1,0 +1,58 @@
+---
+#
+# run this playbook with the following command:
+#
+#     ansible-playbook -i hosts.yml setup_kafka.yml
+#
+- name: Configure Kafka after installation of Confluent Platform
+  user: ec2-user
+  become: yes
+  hosts: broker
+  tasks:
+
+  - name: stop kafka broker
+    systemd:
+      name: confluent-kafka
+      state: stopped
+
+  - name: update broker heap settings
+    lineinfile:
+      dest: /etc/systemd/system/confluent-kafka.service.d/override.conf
+      regex: '^Environment.*KAFKA_HEAP_OPTS'
+      line: 'Environment="KAFKA_HEAP_OPTS=-Xmx4g -Xms4g"'
+
+  - name: comment out confluent metrics settings
+    lineinfile:
+      path: /etc/kafka/server.properties
+      regexp: "{{ item.regexp }}"
+      line: "# \1"
+      backrefs: yes
+    with_items:
+      - { regexp: '^(confluent.support.metrics.enable=.*)' }
+      - { regexp: '^(metric.reporters=.*ConfluentMetricsReporter)' }
+      - { regexp: '^(confluent.metrics.reporter.topic.replicas=.*)' }
+      - { regexp: '^(confluent.support.customer.id=.*)'}
+
+  - name: enable influxdb metrics reporter
+    blockinfile:
+      path: /etc/kafka/server.properties
+      marker: "# enable influxdb metrics reporter"
+      insertafter: EOF
+      content: |
+        kafka.metrics.reporters=com.github.fhuss.kafka.influxdb.KafkaInfluxMetricsReporter
+        kafka.influxdb.metrics.reporter.enabled=true
+        kafka.influxdb.metrics.address=http://m.t.co:8086
+        kafka.influxdb.metrics.database=kafka
+        kafka.influxdb.metrics.retention=7d
+
+  - name: install influxdb metrics reporter JAR
+    copy:
+      src: kafka-influxdb-reporter/kafka-influxdb-metrics-reporter-0.4.0-shaded.jar
+      dest: /usr/share/java/kafka/kafka-influxdb-metrics-reporter-0.4.0-shaded.jar
+      mode: 0644
+
+  - name: start kafka broker
+    systemd:
+      name: confluent-kafka
+      state: started
+    become: yes
