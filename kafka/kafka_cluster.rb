@@ -41,7 +41,6 @@ region = 'us-west-2'
 subnet_id = 'subnet-0c4e4a46911040008'
 keypair = 'labkey'
 
-
 template = ERB.new(File.read("#{File.dirname(__FILE__)}/hosts.yml.erb"), nil, '<>')
 
 n_zk_nodes = 1
@@ -79,5 +78,3 @@ end
 File.open('hosts.yml', 'w') do |f|
   f.write template.result
 end
-
-exit(0)
