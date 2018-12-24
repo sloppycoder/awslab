@@ -7,6 +7,7 @@
 - name: Installing software packages for monitoring host
   hosts: all
   user: ec2-user
+  become: yes
   tasks:
 
   - name: install influxdb
@@ -14,20 +15,17 @@
       name: https://dl.influxdata.com/influxdb/releases/influxdb-1.7.2.x86_64.rpm
       state: installed
       disable_gpg_check: yes
-    become: yes
 
   - name: start influxdb
     systemd:
       state: started
       name: influxdb
-    become: yes
       
   - name: install chronograf
     yum:
       name: https://dl.influxdata.com/chronograf/releases/chronograf-1.7.5.x86_64.rpm
       state: installed
       disable_gpg_check: yes
-    become: yes
 
   - name: configure chronograf
     copy:
@@ -35,7 +33,6 @@
       mode: 0644
       content: |
         CHRONOGRAF_OPTS="--basepath /chronograf"
-    become: yes
     notify:
       - restart chronograf
 
@@ -43,14 +40,12 @@
     systemd:
       state: started
       name: chronograf
-    become: yes
       
   - name: install grafana
     yum:
       name: https://dl.grafana.com/oss/release/grafana-5.4.2-1.x86_64.rpm
       state: installed
       disable_gpg_check: yes
-    become: yes
 
   - name: configure grafana
     lineinfile:
@@ -61,7 +56,6 @@
     with_items:
       - { regexp: '^domain =', insertafter: "^;domain = localhost", line: "domain = {{ fqdn }}" }
       - { regexp: '^root_url =', insertafter: "^;root_url = http://localhost", line: "root_url =  https://{{ fqdn }}/grafana" }
-    become: yes
     notify:
       - restart grafana
 
@@ -69,17 +63,14 @@
     systemd:
       state: started
       name: grafana-server
-    become: yes
 
   handlers:
   - name: restart chronograf
     systemd:
       name: chronograf
       state: restarted
-    become: yes
 
   - name: restart grafana
     systemd:
       name: grafana-server
       state: restarted
-    become: yes
