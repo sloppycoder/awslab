@@ -30,6 +30,9 @@ ansible-playbook -i ../hosts.yml all.yml
 cd ..
 ansible-playbook -i hosts.yml setup_kafka.yml
 
+# check status
+ansible -i hosts.yml broker -a "sudo systemctl status confluent-kafka "
+ansible -i hosts.yml broker -a "df  "
 
 ```
 ansible-playbook -i ../kafka/hosts.yml all.yml
