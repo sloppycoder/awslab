@@ -49,7 +49,7 @@
   - name: enable influxdb metrics reporter
     blockinfile:
       path: /etc/kafka/server.properties
-      marker: "# enable influxdb metrics reporter"
+      marker: '# enable influxdb metrics reporter'
       insertafter: EOF
       content: |
         kafka.metrics.reporters=com.github.fhuss.kafka.influxdb.KafkaInfluxMetricsReporter
@@ -57,9 +57,17 @@
         kafka.influxdb.metrics.address=http://m.t.co:8086
         kafka.influxdb.metrics.database=kafka
         kafka.influxdb.metrics.retention=7d
-        
-        # other settings
+
+  - name: apply misc test settings
+    blockinfile:
+      path: /etc/kafka/server.properties
+      marker: '# misc test settings'
+      insertafter: EOF
+      content: |
         delete.topic.enable=true
+        offset.retention.minutes=30
+        log.cleaner.enable=true
+        log.retention.bytes=1073741824
         
   - name: install influxdb metrics reporter JAR
     copy:
