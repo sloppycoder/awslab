@@ -18,14 +18,14 @@
   - name: update broker heap settings
     lineinfile:
       dest: /etc/systemd/system/confluent-kafka.service.d/override.conf
-      regex: '^Environment.*KAFKA_HEAP_OPTS'
+      regexp: '^Environment.*KAFKA_HEAP_OPTS'
       line: 'Environment="KAFKA_HEAP_OPTS=-Xmx4g -Xms4g"'
 
   - name: comment out confluent metrics settings
     lineinfile:
       path: /etc/kafka/server.properties
       regexp: "{{ item.regexp }}"
-      line: "# \1"
+      line: '# \1'
       backrefs: yes
     with_items:
       - { regexp: '^(confluent.support.metrics.enable=.*)' }
@@ -44,7 +44,10 @@
         kafka.influxdb.metrics.address=http://m.t.co:8086
         kafka.influxdb.metrics.database=kafka
         kafka.influxdb.metrics.retention=7d
-
+        
+        # other settings
+        delete.topic.enable=true
+        
   - name: install influxdb metrics reporter JAR
     copy:
       src: kafka-influxdb-reporter/kafka-influxdb-metrics-reporter-0.4.0-shaded.jar
