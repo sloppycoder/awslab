@@ -1,4 +1,4 @@
 [submodule "cp-ansible"]
 	path = kafka/cp-ansible
 	url = https://github.com/confluentinc/cp-ansible.git
-	branch = 5.0.x
+	branch = 5.2.x
