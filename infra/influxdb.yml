@@ -3,7 +3,7 @@
 # run this playbook with the following command:
 #
 #     ansible-playbook -i "m.t.co," influxdb.yml --extra-vars "fqdn=d.vino9.net"
-# 
+#
 - name: Installing software packages for monitoring host
   hosts: all
   user: ec2-user
@@ -12,7 +12,7 @@
 
   - name: install influxdb
     yum:
-      name: https://dl.influxdata.com/influxdb/releases/influxdb-1.7.2.x86_64.rpm
+      name: https://dl.influxdata.com/influxdb/releases/influxdb-1.7.4.x86_64.rpm
       state: installed
       disable_gpg_check: yes
 
@@ -20,10 +20,10 @@
     systemd:
       state: started
       name: influxdb
-      
+
   - name: install chronograf
     yum:
-      name: https://dl.influxdata.com/chronograf/releases/chronograf-1.7.5.x86_64.rpm
+      name: https://dl.influxdata.com/chronograf/releases/chronograf-1.7.8.x86_64.rpm
       state: installed
       disable_gpg_check: yes
 
@@ -40,10 +40,10 @@
     systemd:
       state: started
       name: chronograf
-      
+
   - name: install grafana
     yum:
-      name: https://dl.grafana.com/oss/release/grafana-5.4.2-1.x86_64.rpm
+      name: https://dl.grafana.com/oss/release/grafana-5.4.3-1.x86_64.rpm
       state: installed
       disable_gpg_check: yes
 
