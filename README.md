@@ -5,35 +5,37 @@ This repo contains instructions and scripts to setup a Kafka installation on AWS
 
 | folder | content |
 |----| --- |
-| gateway | setup a gateway instance exposed to the internet. The instance can be used as monitoring hosts for the Kafka cluster. |
+| infra | Instance runs InfluxDB, Grafana, used as monitoring hosts for the Kafka cluster. |
 | kafka | setup a Kafka cluster for testing. The instances are launched into a private VPC that does not have public accessible IP addresses. |
 
 
 ## to be fixed later
 ```shell
 
-# setup influxd db monitoring host
+# clone this repo
+git submodule update –init
 
+# setup influxd db monitoring host
 cd infra
 ruby infra.rb
-ansible-playbook -i "m.t.co," influxdb.yml --extra-vars "fqdn=m.vino9.net"
-# create database influxdb manually
+ansible-playbook -i "m.t.co," influxdb.yml --extra-vars "fqdn=b.vino9.net"
+# manually create new influx database called kafka
 
-# install confluent platform
+# create instances for kafka cluster
 cd ../kafka
 ruby kafka_cluster.rb
 ansible -i hosts.yml all -m ping
 
-cd  cp-ansible
+# install confluent platform
+cd ../cp-ansible
 ansible-playbook -i ../hosts.yml all.yml
 
+# configure kafka storage and monitoring
 cd ..
 ansible-playbook -i hosts.yml setup_kafka.yml
 
 # check status
 ansible -i hosts.yml broker -a "sudo systemctl status confluent-kafka "
 ansible -i hosts.yml broker -a "df  "
-
-ansible-playbook -i ../kafka/hosts.yml all.yml
 
 ```
