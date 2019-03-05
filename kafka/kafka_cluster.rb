@@ -38,8 +38,8 @@ end
 
 iam_profile = 'arn:aws:iam::025604691335:instance-profile/myInstaceRole'
 region = 'us-west-2'
-subnet_id = 'subnet-0c4e4a46911040008'
-keypair = 'labkey'
+subnet_id = 'subnet-026e2de92730c7355'
+keypair = 'lab-nat-key'
 
 template = ERB.new(File.read("#{File.dirname(__FILE__)}/hosts.yml.erb"), nil, '<>')
 
