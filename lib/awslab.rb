@@ -1,5 +1,7 @@
 require 'aws-sdk-ec2'
 require 'base64'
+require 'json'
+require 'yaml'
 
 # convert a hash into AWS SDK's filter structure.
 # e.g.
@@ -121,4 +123,10 @@ def create_instances(ec2,
   options[:block_device_mappings] = block_device_mappings unless block_device_mappings.nil?
 
   ec2.create_instances(options)
+end
+
+def get_conf(conf_path, env = :default)
+  # read as json in order to symbolize keys
+  conf = JSON.parse(JSON.dump(YAML.load_file(conf_path)), symbolize_names: true)
+  conf[env] || abort('unable to load AWS config file.')
 end

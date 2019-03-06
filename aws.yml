@@ -1,0 +1,7 @@
+default:
+  region: us-west-2
+  inst_profile: "arn:aws:iam::025604691335:instance-profile/myInstaceRole"
+  vpc: vpc-0b86c15f3c715f351
+  private_subnet: subnet-026e2de92730c7355
+  public_subbet: subnet-0fc082fd880991601
+  keypair: lab-nat-key
