@@ -21,10 +21,11 @@ end
 #   m5a.2xlarge 8/32/0.40
 #
 
-iam_profile = 'arn:aws:iam::025604691335:instance-profile/myInstaceRole'
-region = 'us-west-2'
-subnet_id = 'subnet-026e2de92730c7355'
-keypair = 'lab-nat-key'
+conf = get_conf('../aws.yml')
+region = conf[:region]
+iam_profile = conf[:inst_profile]
+subnet_id = conf[:private_subnet]
+keypair = conf[:keypair]
 
 ec2 = Aws::EC2::Resource.new(region: region)
 
