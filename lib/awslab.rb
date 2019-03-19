@@ -66,7 +66,9 @@ def base_startup_script(other_commands = '')
   %(#!/bin/sh
 
 yum update -y
-yum install -y jq git tmux telnet
+yum install -y jq git tmux telnet 
+# this package is instaleld on AWS AMI by default, but needs to be installed explicitly for CentOS
+yum install -y awscli
 
 curl -sL https://gist.github.com/sloppycoder/d495a2bb2f68a847bda7286dcecc3dcf/raw > /etc/rc.d/rc.local
 chmod +x /etc/rc.d/rc.local
@@ -98,6 +100,7 @@ def create_instances(ec2,
                      keypair,
                      subnet_id,
                      quantity: 1,
+                     image_id: 'ami-01bbe152bf19d0289', # Amazon Linux 2 AMI (HVM) x86_64
                      instance_type: 't3.micro',
                      block_device_mappings: nil,
                      security_group_id: nil,
@@ -108,7 +111,7 @@ def create_instances(ec2,
   return nil if result.first.subnets.empty?
 
   options = {
-    image_id: 'ami-01bbe152bf19d0289', # Amazon Linux 2 AMI (HVM) x86_64
+    image_id: image_id,
     min_count: quantity,
     max_count: quantity,
     key_name: keypair,
