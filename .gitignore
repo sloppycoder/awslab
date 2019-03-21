@@ -7,6 +7,4 @@ tmp/*
 kafka/hosts.yml
 *.retry
 .byebug_history
-
-
-
+.vagrant/
