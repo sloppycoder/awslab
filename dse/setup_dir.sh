@@ -2,7 +2,7 @@
 
 set -e 
 
-BASE_DIR=/apps/dse/data
+BASE_DIR=`pwd`
 
 makedir () {
     mkdir -p $1
@@ -11,7 +11,7 @@ makedir () {
 
 makedir $BASE_DIR
 
-declare -a arr=("/var/lib/cassandra" "/var/log/cassandra" "/var/log/spark" "/var/lib/spark" "/var/lib/dsefs")
+declare -a arr=("/var/lib/cassandra" "/var/log/cassandra" "/var/log/spark" "/var/lib/spark" "/var/lib/dsefs" "/var/lib/spark/worker" "/var/lib/spark/rdd")
 for dir in "${arr[@]}"
 do
     makedir $BASE_DIR$dir
