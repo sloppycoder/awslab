@@ -2,7 +2,7 @@
 
 set -e
 
-if [ "$1" = ""]; then
+if [ "$1" = "" ]; then
 	BASE_DIR=`pwd`
 else
 	BASE_DIR=$1
@@ -29,5 +29,6 @@ do
     mkdir -p $BASE_DIR$dir
 
     # needs root to make link from /var
+    echo sudo rm -rf $dir
     echo sudo ln -s $BASE_DIR$dir $dir
 done

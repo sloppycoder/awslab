@@ -28,7 +28,7 @@
         - unzip
       state: installed
 
-  - name: Install prerequisite
+  - name: Install DSE prerequisites
     yum:
       name:
         - libaio
@@ -56,6 +56,15 @@
   - name: Copy directory setup script
     copy:
       src: setup_dir.sh
-      dest: /home/centos/setup_dir.sh'
+      dest: /home/centos/setup_dir.sh
       mode: 0755
 
+  - name: Enable features of DSE
+    lineinfile:
+      path: /etc/default/dse
+      regexp: "{{ item.regexp }}"
+      line: '\1=1'
+      backrefs: yes
+    with_items:
+      - { regexp: '^(SPARK_ENABLED)=0' }
+      - { regexp: '^(GRAPH_ENABLED)=0' }
