@@ -50,7 +50,7 @@
 
   - name: install dse package
     yum:
-      name: dse-full
+      name: dse-full dse-demos
       state: installed
 
   - name: Copy directory setup script

@@ -13,8 +13,7 @@ echo # settting up DSE data directories at $BASE_DIR
 declare -a arr=(
 	"/var/lib/cassandra"
 	"/var/log/cassandra"
-        "/var/lib/spark/worker"
-        "/var/lib/spark/rdd"
+  "/var/lib/spark"
 	"/var/log/spark"
 	"/var/lib/dsefs"
 	)
@@ -31,3 +30,10 @@ do
     echo sudo rm -rf $dir
     echo sudo ln -s $BASE_DIR$dir $dir
 done
+
+
+# neede for Spark to work
+mkdir $BASE_DIR/var/lib/spark/worker
+mkdir $BASE_DIR/var/lib/spark/rdd
+
+
