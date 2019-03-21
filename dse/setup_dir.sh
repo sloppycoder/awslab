@@ -13,11 +13,10 @@ echo # settting up DSE data directories at $BASE_DIR
 declare -a arr=(
 	"/var/lib/cassandra"
 	"/var/log/cassandra"
+        "/var/lib/spark/worker"
+        "/var/lib/spark/rdd"
 	"/var/log/spark"
-	"/var/lib/spark"
 	"/var/lib/dsefs"
-	"/var/lib/spark/worker"
-	"/var/lib/spark/rdd"
 	)
 
 for dir in "${arr[@]}"
