@@ -6,7 +6,7 @@
 #
 #     ansible-playbook -i "127.0.0.1:2222," dse.yml --extra-vars "dsa_email=your@email.com" --extra-vars "dsa_key=downloadkey"
 #
-- name: Installing Datastax Enterprise from YUM repo
+- name: Installing Datastax Enterprise from offical YUM repo
   hosts: all
   user: centos
   become: yes
@@ -28,7 +28,7 @@
         - unzip
       state: installed
 
-  - name: Install DSE prerequisites
+  - name: Install Datastax Enterprise prerequisites
     yum:
       name:
         - libaio
@@ -39,7 +39,7 @@
   - name: Add official Datastax YUM repository
     yum_repository:
       name: datastax
-      description: DataStax Repo for DataStax Enterprise
+      description: YUM Repo for Datastax Enterprise
       file: datastax
       baseurl: "https://{{ dsa_email|urlencode() }}:{{ dsa_key|urlencode() }}@rpm.datastax.com/enterprise/"
       gpgcheck: yes
@@ -48,18 +48,14 @@
       state: present
       key: https://rpm.datastax.com/rpm/repo_key
 
-  - name: install dse package
+  - name: install Datastax Enterprise packages
     yum:
-      name: dse-full dse-demos
+      name: 
+        - dse-full
+        - dse-demos
       state: installed
 
-  - name: Copy directory setup script
-    copy:
-      src: setup_dir.sh
-      dest: /home/centos/setup_dir.sh
-      mode: 0755
-
-  - name: Enable features of DSE
+  - name: Enable features of Datastax Enterprise
     lineinfile:
       path: /etc/default/dse
       regexp: "{{ item.regexp }}"
@@ -68,3 +64,25 @@
     with_items:
       - { regexp: '^(SPARK_ENABLED)=0' }
       - { regexp: '^(GRAPH_ENABLED)=0' }
+
+  # user is created by dse package but home directory
+  # does not exist. we'll create it
+  - name: Creates home directory for cassandra
+    user:
+      name: cassandra
+      home: /home/cassandra
+      move_home: yes
+      state: present
+      skeleton: yes
+
+  - name: Copy helper scripts
+    copy:
+      src: "{{ item }}"
+      dest: "/home/cassandra/{{ item }}"
+      owner: cassandra
+      group: cassandra
+      mode: 0755
+    with_items:
+      - setup_dir.sh
+      - setup_sdkman.sh
+
