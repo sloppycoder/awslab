@@ -18,5 +18,5 @@ curl -s "https://get.sdkman.io" | bash
 source "$HOME/.sdkman/bin/sdkman-init.sh"
 sdk install maven 3.3.9
 sdk install gradle 4.10.3
-sdk install sbt 1.2.8
+sdk install sbt 0.13.18
 
