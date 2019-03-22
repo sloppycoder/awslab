@@ -1,12 +1,12 @@
 ---
 #
-# Playbook installs Datastax Enterprise on Centos7 VM
+# Playbook installs DataStax Enterprise on Centos7 VM
 #
 # run this playbook with the following command:
 #
 #     ansible-playbook -i "127.0.0.1:2222," dse.yml --extra-vars "dsa_email=your@email.com" --extra-vars "dsa_key=downloadkey"
 #
-- name: Installing Datastax Enterprise from offical YUM repo
+- name: Installing DataStax Enterprise from offical YUM repo
   hosts: all
   user: centos
   become: yes
@@ -28,7 +28,7 @@
         - unzip
       state: installed
 
-  - name: Install Datastax Enterprise prerequisites
+  - name: Install DataStax Enterprise prerequisites
     yum:
       name:
         - libaio
@@ -36,10 +36,10 @@
         - R
       state: installed
 
-  - name: Add official Datastax YUM repository
+  - name: Add official DataStax YUM repository
     yum_repository:
       name: datastax
-      description: YUM Repo for Datastax Enterprise
+      description: YUM Repo for DataStax Enterprise
       file: datastax
       baseurl: "https://{{ dsa_email|urlencode() }}:{{ dsa_key|urlencode() }}@rpm.datastax.com/enterprise/"
       gpgcheck: yes
@@ -48,14 +48,14 @@
       state: present
       key: https://rpm.datastax.com/rpm/repo_key
 
-  - name: install Datastax Enterprise packages
+  - name: install DataStax Enterprise packages
     yum:
       name: 
         - dse-full
         - dse-demos
       state: installed
 
-  - name: Enable features of Datastax Enterprise
+  - name: Enable features of DataStax Enterprise
     lineinfile:
       path: /etc/default/dse
       regexp: "{{ item.regexp }}"
