@@ -1,7 +1,31 @@
-default:
+Comment: >
+  search for offical Centos7 image in AWS marketplace
+  get product code from https://wiki.centos.org/Cloud/AWS, then search using aws cli
+
+  aws ec2 describe-images \
+  --owners 'aws-marketplace' \
+  --filters 'Name=product-code,Values=aw0evgkw8e5c1q413zgy5pjce' \
+  --query 'sort_by(Images, &CreationDate)[-1].[ImageId]' \
+  --output 'text'
+
+  returns
+
+  ami-01ed306a12b7d1c96
+
+vino:
   region: us-west-2
   inst_profile: "arn:aws:iam::025604691335:instance-profile/myInstaceRole"
-  vpc: vpc-0b86c15f3c715f351
-  private_subnet: subnet-026e2de92730c7355
-  public_subbet: subnet-0fc082fd880991601
-  keypair: lab-nat-key
+  vpc: vpc-08a9b7d66be56146d
+  public_net_keypair: hayashi3
+  private_net_keypair: lab-nat-key
+  centos_ami_id: ami-01ed306a12b7d1c96
+  aws_linux2_ami_id: ami-01bbe152bf19d0289
+
+default:
+  region: ap-southeast-1
+  inst_profile: "arn:aws:iam::065199553532:instance-profile/r53role"
+  vpc: vpc-08a9b7d66be56146d
+  public_net_keypair: lin-acn-key-2
+  private_net_keypair: gw-key
+  centos_ami_id: ami-0b4dd9d65556cac22
+  aws_linux2_ami_id: ami-0b419c3a4b01d1859

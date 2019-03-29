@@ -81,6 +81,34 @@ sleep 2
 )
 end
 
+def centos7_startup_script(other_commands = '')
+  %(#!/bin/sh
+
+yum update -y
+yum install -y git tmux telnet awscli
+yum install -y epel-release
+yum install -y htop jq ansible
+
+
+#{other_commands}
+
+)
+end
+
+def set_hostname(fqdn)
+  "hostnamectl set-hostname #{fqdn}"
+end
+
+def update_r53_script
+%(
+  curl -sL https://gist.github.com/sloppycoder/d495a2bb2f68a847bda7286dcecc3dcf/raw > /etc/rc.d/rc.local
+  chmod +x /etc/rc.d/rc.local
+
+  sleep 1
+  /etc/rc.d/rc.local
+)
+end
+
 # dangerous script!
 def init_vol(device_name)
   return '' if device_name.nil? || device_name.empty?
@@ -100,7 +128,7 @@ def create_instances(ec2,
                      keypair,
                      subnet_id,
                      quantity: 1,
-                     image_id: 'ami-01bbe152bf19d0289', # Amazon Linux 2 AMI (HVM) x86_64
+                     image_id: nil,
                      instance_type: 't3.micro',
                      block_device_mappings: nil,
                      security_group_id: nil,

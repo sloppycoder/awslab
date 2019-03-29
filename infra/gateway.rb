@@ -1,11 +1,10 @@
 #!/usr/bin/env ruby
 
 #
-# setup a infra machine for testing
+# setup a gateway machine for testing
 #
 #  1. create a security group ssh-http-https
-#  2. launch an instance with AWS Linux 2
-#  3. Update Route 53 record setup to reflect the public IP of the instance
+#  2. launch an instance with Centos7
 #
 
 require_relative '../lib/awslab'
@@ -30,46 +29,44 @@ def create_security_group(ec2, vpc_id, group_name)
       end
   )
 
-  sg.create_tags(tags: tags('Project' => 'awslab'))
-
   puts "created new security group #{group_name}"
   sg
 end
 
 def instance_tags(fqdn)
   {
-    'Project' => 't-co-infra',
-    'os' => 'Linux',
+    'Project' => 't-co-gw',
     'Role' => 'gateway',
-    'FQDN' => fqdn
   }
 end
 
-iam_profile = 'arn:aws:iam::025604691335:instance-profile/myInstaceRole'
-region = 'us-west-2'
-security_group = 'ssh-http-https'
-vpc_id = 'vpc-057a740f9dc10eb7b'
-fqdn = 't.vino9.net'
-keypair = 'aws_hayashi3'
+conf = get_conf('../aws.yml')
+region = conf[:region]
+vpc_id = conf[:vpc]
+ami_id = conf[:centos_ami_id]
+iam_profile = conf[:inst_profile]
+security_group = 'http-https-ssh'
+keypair = conf[:public_net_keypair]
 
 ec2 = Aws::EC2::Resource.new(region: region)
 
 result = ec2.client.describe_security_groups(aws_filters('group-name' => security_group))
+
 sg = if result.security_groups.empty?
        create_security_group(ec2, vpc_id, security_group)
      else
        result.security_groups[0]
      end
 
-# TODO: add check if instance already exists
-subnet = find_subnet(ec2.client, vpc_id, name: 'Public subnet')
+subnet = find_subnet(ec2.client, vpc_id, name: 'public', zone: 'b')
 
 instance = create_instances(ec2, keypair, subnet.subnet_id,
-                            instance_type: 't3.micro',
+                            instance_type: 't3.small',
+                            image_id: ami_id,
                             iam_role_profile: iam_profile,
-                            startup_script: base_startup_script,
+                            startup_script: centos7_startup_script,
                             security_group_id: sg.group_id,
-                            tags: instance_tags(fqdn))
+                            tags: { role: 'gateway', Project: 'ktb' })
 
 puts "waiting for instance #{instance.first.id} to be ready"
 
@@ -79,27 +76,18 @@ ec2.client.wait_until(:instance_status_ok, instance_ids: [instance.first.id])
 puts %(
 Instance ready. To login:
 
-    ssh ec2-user@#{fqdn}
+    ssh centos@<instance_public_ip>
 
 If you wish to install cloud9, run the following command first, then go to Cloud9 console to
 setup the SSH environment into this machine.
 
-    # essentials
-    sudo amazon-linux-extras install docker -y
+   sudo yum install -y nodejs
+   curl -sSL -O https://github.com/gbraad/ansible-playbooks/raw/master/playbooks/install-c9sdk.yml
+   ansible-playbook install-c9sdk.yml
 
-    # languages
-    # java
-    sudo yum install -y java-1.8.0-openjdk-headless maven
+For nginx web server with free SSL certicate:
 
-    # Go
-    sudo amazon-linux-extras install golang1.11 -y
+    sudo yum install -y nginx certbot python2-certbot-nginx
 
-    # Ruby
-    sudo amazon-linux-extras install ruby2.4 -y
-    sudo yum install -y ruby-devel ruby-doc rubygem-bundler
 
-    # nodejs is not in default repos. it's safer to just get binary
-    # than install from epel. some packages in epel conflicts with what AWS
-    # provides.
-    curl http://nodejs.org/dist/v6.12.3/node-v6.12.3-linux-x64.tar.gz | tar zxf -
 )
