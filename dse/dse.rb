@@ -5,23 +5,10 @@ require_relative '../lib/awslab'
 def instance_tags(role, fqdn)
   {
     'Project' => 't-co-dse',
-    'os'      => 'Linux',
     'Role'    => role,
     'FQDN'    => fqdn,
     'Name'    => 'dse'
   }
-end
-
-def set_hostname(fqdn)
-  "hostnamectl set-hostname #{fqdn}"
-end
-
-def extra_pkgs
-  %(
-yum install -y epel-release
-yum install -y htop jq
-
-)
 end
 
 #
@@ -33,35 +20,19 @@ end
 
 conf = get_conf('../aws.yml')
 region = conf[:region]
+ami_id = conf[:centos_ami_id]
+vpc_id = conf[:vpc]
 iam_profile = conf[:inst_profile]
-subnet_id = conf[:private_subnet]
-keypair = conf[:keypair]
-
-=begin
-
-search for offical Centos7 image in AWS marketplace
-get product code from https://wiki.centos.org/Cloud/AWS, then search using aws cli
-
-aws ec2 describe-images \
-           --owners 'aws-marketplace' \
-           --filters 'Name=product-code,Values=aw0evgkw8e5c1q413zgy5pjce' \
-           --query 'sort_by(Images, &CreationDate)[-1].[ImageId]' \
-           --output 'text'
-
-returns
-
- ami-01ed306a12b7d1c96
-
-=end
-
+keypair = conf[:private_net_keypair]
 
 ec2 = Aws::EC2::Resource.new(region: region)
+subnet = find_subnet(ec2.client, vpc_id, name: 'private')
 
 { 'dse' => 'dse.t.co' }.each do |role, fqdn|
-  create_instances(ec2, keypair, subnet_id,
-       image_id: 'ami-01ed306a12b7d1c96',
-       instance_type: 'm5a.xlarge',
+  create_instances(ec2, keypair, subnet.subnet_id,
+       image_id: ami_id,
+       instance_type: 'm5a.large',
        iam_role_profile: iam_profile,
-       startup_script: base_startup_script(set_hostname(fqdn) + extra_pkgs),
+       startup_script: centos7_startup_script(set_hostname(fqdn) + update_r53_script),
        tags: instance_tags(role, fqdn))
 end

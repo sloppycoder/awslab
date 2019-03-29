@@ -19,14 +19,10 @@ require_relative '../lib/awslab'
 def instance_tags(role, fqdn)
   {
     'Project' => 'kafka',
-    'os' => 'Linux',
     'Role' => role,
-    'FQDN' => fqdn
+    'FQDN' => fqdn,
+    'Name' => fqdn.split('.').first
   }
-end
-
-def set_hostname(fqdn)
-  "hostnamectl set-hostname #{fqdn}"
 end
 
 #
@@ -38,9 +34,11 @@ end
 
 conf = get_conf('../aws.yml')
 region = conf[:region]
+vpc_id = conf[:vpc]
+ami_id = conf[:centos_ami_id]
 iam_profile = conf[:inst_profile]
-subnet_id = conf[:private_subnet]
-keypair = conf[:keypair]
+keypair = conf[:public_net_keypair]
+
 
 template = ERB.new(File.read("#{File.dirname(__FILE__)}/hosts.yml.erb"), nil, '<>')
 
@@ -49,23 +47,27 @@ n_broker_nodes = 3
 
 ec2 = Aws::EC2::Resource.new(region: region)
 
+subnet = find_subnet(ec2.client, vpc_id, name: 'public', zone: 'b')
+
 (1..n_zk_nodes).collect { |i| "zk#{i}.t.co" }.each do |fqdn|
-  create_instances(ec2, keypair, subnet_id,
+  create_instances(ec2, keypair, subnet.subnet_id,
+                   image_id: ami_id,
                    instance_type: 'm5.large',
                    iam_role_profile: iam_profile,
-                   startup_script: base_startup_script(set_hostname(fqdn)),
+                   startup_script: centos7_startup_script(set_hostname(fqdn) + update_r53_script),
                    tags: instance_tags('zoo-keeper', fqdn))
 end
 
 (1..n_broker_nodes).collect { |i| "b#{i}.t.co" }.each do |fqdn|
-  create_instances(ec2, keypair, subnet_id,
+  create_instances(ec2, keypair, subnet.subnet_id,
+                   image_id: ami_id,
                    instance_type: 'm5.xlarge', # 'm5.2xlarge'
                    block_device_mappings: [
                      ebs('/dev/xvda'),
                      ebs('/dev/xvdb', type: 'st1', size: 500)
                    ],
                    iam_role_profile: iam_profile,
-                   startup_script: base_startup_script(set_hostname(fqdn)) + + init_vol('/dev/xvdb'),
+                   startup_script: base_startup_script(set_hostname(fqdn)) + update_r53_script + init_vol('/dev/xvdb'),
                    tags: instance_tags('kafka-broker', fqdn))
 end
 
@@ -73,7 +75,8 @@ end
   'kafka-connect' => 'conn.t.co',
   'kafka-tools' => 'kt.t.co'
 }.each do |role, fqdn|
-  create_instances(ec2, keypair, subnet_id,
+  create_instances(ec2, keypair, subnet.subnet_id,
+                   image_id: ami_id,
                    instance_type: 'm5.large',
                    iam_role_profile: iam_profile,
                    startup_script: base_startup_script(set_hostname(fqdn)),
