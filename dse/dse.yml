@@ -33,7 +33,6 @@
       name:
         - libaio
         - java-1.8.0-openjdk-headless
-        - R
       state: installed
 
   - name: Add official DataStax YUM repository
