@@ -16,16 +16,14 @@ vino:
   region: us-west-2
   inst_profile: "arn:aws:iam::025604691335:instance-profile/myInstaceRole"
   vpc: vpc-08a9b7d66be56146d
-  public_net_keypair: hayashi3
-  private_net_keypair: lab-nat-key
+  keypair: hayashi3
   centos_ami_id: ami-01ed306a12b7d1c96
   aws_linux2_ami_id: ami-01bbe152bf19d0289
 
 default:
   region: ap-southeast-1
   inst_profile: "arn:aws:iam::065199553532:instance-profile/r53role"
-  vpc: vpc-08a9b7d66be56146d
-  public_net_keypair: lin-acn-key-2
-  private_net_keypair: gw-key
+  vpc: vpc-ebab9c8c
+  keypair: lin-acn-key-2
   centos_ami_id: ami-0b4dd9d65556cac22
   aws_linux2_ami_id: ami-0b419c3a4b01d1859

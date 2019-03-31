@@ -1,6 +1,7 @@
 require 'aws-sdk-ec2'
 require 'base64'
 require 'json'
+require 'optparse'
 require 'yaml'
 
 # convert a hash into AWS SDK's filter structure.
@@ -66,7 +67,7 @@ def base_startup_script(other_commands = '')
   %(#!/bin/sh
 
 yum update -y
-yum install -y jq git tmux telnet 
+yum install -y jq git tmux telnet
 # this package is instaleld on AWS AMI by default, but needs to be installed explicitly for CentOS
 yum install -y awscli
 
@@ -87,8 +88,7 @@ def centos7_startup_script(other_commands = '')
 yum update -y
 yum install -y git tmux telnet awscli
 yum install -y epel-release
-yum install -y htop jq ansible
-
+yum install -y htop jq
 
 #{other_commands}
 
@@ -132,6 +132,7 @@ def create_instances(ec2,
                      instance_type: 't3.micro',
                      block_device_mappings: nil,
                      security_group_id: nil,
+                     associate_public_ip: false,
                      iam_role_profile: nil,
                      startup_script: '',
                      tags: {})
@@ -144,13 +145,17 @@ def create_instances(ec2,
     max_count: quantity,
     key_name: keypair,
     instance_type: instance_type,
-    subnet_id: subnet_id,
+    network_interfaces: [
+      { device_index: 0,
+        subnet_id: subnet_id,
+        groups: [security_group_id],
+        associate_public_ip_address: associate_public_ip
+      }],
     placement: { availability_zone: result.first.subnets.first.availability_zone },
     iam_instance_profile: { arn: iam_role_profile },
     user_data: Base64.encode64(startup_script),
     tag_specifications: aws_tags('instance', tags)
   }
-  options[:security_group_ids] = [security_group_id] unless security_group_id.nil?
   options[:block_device_mappings] = block_device_mappings unless block_device_mappings.nil?
 
   ec2.create_instances(options)

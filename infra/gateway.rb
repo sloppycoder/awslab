@@ -33,11 +33,12 @@ def create_security_group(ec2, vpc_id, group_name)
   sg
 end
 
-def instance_tags(fqdn)
-  {
-    'Project' => 't-co-gw',
-    'Role' => 'gateway',
-  }
+def extra_pkg_script
+  %(
+
+yum install -y ansible
+
+)
 end
 
 conf = get_conf('../aws.yml')
@@ -45,8 +46,8 @@ region = conf[:region]
 vpc_id = conf[:vpc]
 ami_id = conf[:centos_ami_id]
 iam_profile = conf[:inst_profile]
-security_group = 'http-https-ssh'
-keypair = conf[:public_net_keypair]
+security_group = 'http-https-ssh-only'
+keypair = conf[:keypair]
 
 ec2 = Aws::EC2::Resource.new(region: region)
 
@@ -58,14 +59,15 @@ sg = if result.security_groups.empty?
        result.security_groups[0]
      end
 
-subnet = find_subnet(ec2.client, vpc_id, name: 'public', zone: 'b')
+subnet = find_subnet(ec2.client, vpc_id, zone: 'b')
 
 instance = create_instances(ec2, keypair, subnet.subnet_id,
                             instance_type: 't3.small',
                             image_id: ami_id,
                             iam_role_profile: iam_profile,
-                            startup_script: centos7_startup_script,
+                            startup_script: centos7_startup_script(extra_pkg_script),
                             security_group_id: sg.group_id,
+                            associate_public_ip: true,
                             tags: { role: 'gateway', Project: 'ktb' })
 
 puts "waiting for instance #{instance.first.id} to be ready"
